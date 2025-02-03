@@ -1,22 +1,37 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../models/shopping_item.dart';
-import 'dart:convert'; // Ajouter cette importation
+import '../models/shopping_list.dart';
+import 'dart:convert';
 
 class DataService {
-  static const _key = 'shoppingItems';
+  static const _key = 'shoppingLists';
 
-  static Future<List<ShoppingItem>> loadItems() async {
+  static Future<List<ShoppingList>> loadLists() async {
     final prefs = await SharedPreferences.getInstance();
-    final itemsJson = prefs.getStringList(_key) ?? [];
-    return itemsJson
-        .map((jsonString) => ShoppingItem.fromJson(jsonDecode(jsonString)))
+    final listsJson = prefs.getStringList(_key) ?? [];
+    return listsJson
+        .map((jsonString) => ShoppingList.fromJson(jsonDecode(jsonString)))
         .toList();
   }
 
-  static Future<void> saveItems(List<ShoppingItem> items) async {
+  static Future<void> saveLists(List<ShoppingList> lists) async {
     final prefs = await SharedPreferences.getInstance();
-    final itemsJson = items.map((item) => jsonEncode(item.toJson())).toList();
-    await prefs.setStringList(_key, itemsJson);
+    final listsJson = lists.map((list) => jsonEncode(list.toJson())).toList();
+    await prefs.setStringList(_key, listsJson);
+  }
+
+  static Future<void> updateList(ShoppingList updatedList) async {
+    final lists = await loadLists();
+    final index = lists.indexWhere((list) => list.id == updatedList.id);
+    if (index != -1) {
+      lists[index] = updatedList;
+      await saveLists(lists);
+    }
+  }
+
+  static Future<void> deleteList(String listId) async {
+    final lists = await loadLists();
+    lists.removeWhere((list) => list.id == listId);
+    await saveLists(lists);
   }
 }
